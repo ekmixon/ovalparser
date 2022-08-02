@@ -48,9 +48,7 @@ class OvalBase(object):
     @staticmethod
     def get_mdlname(tag_node):
         field_name = tag_node.get_fieldname().lower()
-        if field_name and '#' in field_name:
-            return field_name.split('#')[-1]
-        return None
+        return field_name.split('#')[-1] if field_name and '#' in field_name else None
 
     def set_item(self, attr_name):
         attr = self.node.get_attr(attr_name).lower()
@@ -72,15 +70,15 @@ class OvalBase(object):
         else:
             tags = self.node.get_child_tag(name)
         if len(tags) != 1:
-            raise Exception('The count of tag <%s> should be 1' % name)
+            raise Exception(f'The count of tag <{name}> should be 1')
         return tags[0]
 
     def all(self, name=None):
-        if name is None:
-            tags = self.node.get_childtag_list()
-        else:
-            tags = self.node.get_child_tag(name)
-        return tags
+        return (
+            self.node.get_childtag_list()
+            if name is None
+            else self.node.get_child_tag(name)
+        )
 
     def one_or_zero(self, name=None):
         if name is None:
@@ -89,7 +87,7 @@ class OvalBase(object):
             tags = self.node.get_child_tag(name)
         count = len(tags)
         if count > 1:
-            raise Exception('There is no tag <%s>' % name)
+            raise Exception(f'There is no tag <{name}>')
         return None if count == 0 else tags[0]
 
 
@@ -102,22 +100,22 @@ class Entity(OvalBase):
 
         item = self.node.get_attr('datatype').upper() or 'STRING'
         if not hasattr(datatype, item):
-            raise Exception('Unsupport datatype: %s' % item)
+            raise Exception(f'Unsupport datatype: {item}')
         self.datatype = getattr(datatype, item)
 
         item = self.node.get_attr('operation')
         if item not in values.cmp_func:
-            raise Exception('Unsupport operation: %s' % item)
+            raise Exception(f'Unsupport operation: {item}')
         self.operator = values.cmp_func[item]
 
         var_ref = self.node.get_attr('var_ref')
         if var_ref and var_ref not in self.variables:
-            raise Exception('Can not find the variable: %s' % var_ref)
+            raise Exception(f'Can not find the variable: {var_ref}')
         self.values = self.variables.get(var_ref, [self.node.get_data()])
 
         var_check = self.node.get_attr('var_check')
         if var_check and var_check not in values.CHECK:
-            raise Exception('Bad variable check: %s' % var_check)
+            raise Exception(f'Bad variable check: {var_check}')
         var_check = var_check or None
 
         self.var_check = var_check or values.CHECK.all

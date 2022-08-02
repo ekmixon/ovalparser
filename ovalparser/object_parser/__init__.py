@@ -47,7 +47,7 @@ class Set(OvalBase):
                 mark, result = obj.result(ExistenceEnum.any_exist)
                 res.append((obj.flag(), result))
             else:
-                raise Exception('The tag <set> does not support sub tag <%s>' % tagname)
+                raise Exception(f'The tag <set> does not support sub tag <{tagname}>')
 
         count = len(res)
         if count == 1:
@@ -84,17 +84,20 @@ class ObjectBase(OvalBase):
                 self.entities[tagname] = Entity(node)
 
         if self._items and self.entities:
-            raise Exception('<%s_object> error' % self.name)
+            raise Exception(f'<{self.name}_object> error')
 
     def items(self):
         ret = []
         items = self.client.get(self.name)
         for item in items:
-            if not all(key in item.keys() for key in self.entities.keys()):
+            if any(key not in item.keys() for key in self.entities.keys()):
                 item = Item()
                 item.status = StatusEnum.error
                 return [item]
-            if all([entity.result(item.get(name)) for name, entity in self.entities.items()]):
+            if all(
+                entity.result(item.get(name))
+                for name, entity in self.entities.items()
+            ):
                 ret.append(item)
         return ret
 
@@ -146,9 +149,11 @@ class ObjectBase(OvalBase):
 
 def get_object(module, name):
     import independent
-    cls_name = name.capitalize()+'Object'
+    cls_name = f'{name.capitalize()}Object'
     if module not in locals():
         return ObjectBase
-    if not hasattr(locals()[module], cls_name):
-        return ObjectBase
-    return getattr(locals()[module], cls_name)
+    return (
+        getattr(locals()[module], cls_name)
+        if hasattr(locals()[module], cls_name)
+        else ObjectBase
+    )

@@ -57,7 +57,7 @@ class LinkBase(object):
         c_attrs = ('flag', 'get', 'status', 'objects')
         for attr in n_attrs:
             if not hasattr(cls, attr):
-                raise LinkBase.LinkError('Link class has no %s attribute' % attr)
+                raise LinkBase.LinkError(f'Link class has no {attr} attribute')
 
         for attr in c_attrs:
             if hasattr(cls, attr):

@@ -22,11 +22,11 @@ class TagNode:
         tag = self.__root.tag
         self.__prog = re.compile(r'(\{(?P<field>.*)\})?(?P<name>.*)')
         res = self.__prog.match(tag)
-        self.__tagname = res.group('name')
-        self.__field = res.group('field')
+        self.__tagname = res['name']
+        self.__field = res['field']
 
     def __repr__(self):
-        return '<TagNode:%s>' % self.get_tagname()
+        return f'<TagNode:{self.get_tagname()}>'
 
     def get_tagname(self):
         return self.__tagname

@@ -57,8 +57,7 @@ class Test(OvalBase):
             self.records['test'][self.id] = res
             return self.records['test'][self.id]
 
-        state_nodes = self.all('state')
-        if state_nodes:
+        if state_nodes := self.all('state'):
             counter = dict(zip(check_order, (0, )*len(check_order)))
             for state_node in state_nodes:
                 ret = State(state_node).result(self.check, obj_res)
@@ -174,10 +173,7 @@ class Local_variable(OvalBase):
 
 class Constant_variable(OvalBase):
     def result(self):
-        list_res = []
-        for value in self.all():
-            list_res.append(value.get_data())
-        return list_res
+        return [value.get_data() for value in self.all()]
 
 
 class Object_component(Object):
@@ -223,10 +219,10 @@ class Arithmetic(OvalBase):
         operator = self.arithmetic_operation
         get_number = lambda a: self.type_check(a, 'int') or self.type_check(a, 'float')
         get_numbers = lambda a: [get_number(i) for i in a if i is not None]
-        res = []
-        for values in itertools.product(*list_res):
-            res.append(arithmetic_func[operator](get_numbers(values)))
-        return res
+        return [
+            arithmetic_func[operator](get_numbers(values))
+            for values in itertools.product(*list_res)
+        ]
 
 
 class Begin(OvalBase):
@@ -247,17 +243,16 @@ class Concat(OvalBase):
         if not list_res:
             return []
 
-        res = []
         get_strings = lambda a: [str(i) for i in a]
-        for values in itertools.product(*list_res):
-            res.append(''.join(get_strings(values)))
-        return res
+        return [
+            ''.join(get_strings(values)) for values in itertools.product(*list_res)
+        ]
 
 
 class Count(OvalBase):
     def result(self):
         list_res = Local_variable(self.node).result()
-        return [sum([len(l) for l in list_res])]
+        return [sum(len(l) for l in list_res)]
 
 
 class End(OvalBase):
@@ -280,8 +275,8 @@ class Escape_regex(OvalBase):
         list_res = obj.result()
 
         res = []
+        reg_marks = '^$\.[](){}*+?|'
         for item in list_res:
-            reg_marks = '^$\.[](){}*+?|'
             for mark in reg_marks:
                 item = str(item).replace(mark, '')
             res.append(item)
@@ -361,7 +356,7 @@ class Oval_definition(OvalBase):
         OvalBase.variables = {}
         OvalBase.definitions = {}
         OvalBase.records = dict(zip(Oval_definition.key_element, ({}, {}, {}, {}, {})))
-        OvalBase.ev = external_variable if external_variable else {}
+        OvalBase.ev = external_variable or {}
         OvalBase.client = client
 
     def __init__(self, filepath, source='AXTX'):
@@ -371,8 +366,8 @@ class Oval_definition(OvalBase):
         super(Oval_definition, self).__init__(self.__root__)
 
         for element in self.key_element:
-            res = getattr(self, element+'s')
-            for items in self.all(element+'s'):
+            res = getattr(self, f'{element}s')
+            for items in self.all(f'{element}s'):
                 for item in items.get_childtag_list():
                     itemid = item.get_attr('id')
                     res[itemid] = item
@@ -401,10 +396,12 @@ class Oval_definition(OvalBase):
 class OvalParser(object):
     def __init__(self, path, link_cls):
         self.path = path
-        if not hasattr(link_cls, 'get'):
-            self.link_cls = type('Link', (link_cls, ), dict(get=LinkBase.get))
-        else:
-            self.link_cls = link_cls
+        self.link_cls = (
+            link_cls
+            if hasattr(link_cls, 'get')
+            else type('Link', (link_cls,), dict(get=LinkBase.get))
+        )
+
         self.link_cls = LinkBase.check(self.link_cls)
         self.results = {}
 

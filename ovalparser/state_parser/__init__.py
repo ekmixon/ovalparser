@@ -38,9 +38,11 @@ class StateBase(OvalBase):
 
 
 def get_state(module, name):
-    cls_name = name.capitalize()+'State'
+    cls_name = f'{name.capitalize()}State'
     if module not in locals():
         return StateBase
-    if not hasattr(locals()[module], cls_name):
-        return StateBase
-    return getattr(locals()[module], cls_name)
+    return (
+        getattr(locals()[module], cls_name)
+        if hasattr(locals()[module], cls_name)
+        else StateBase
+    )

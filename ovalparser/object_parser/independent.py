@@ -25,9 +25,7 @@ class VariableObject(ObjectBase):
 
     def flag(self):
         var_ref = self.entities['var_ref'].values[0]
-        if var_ref in self.variables:
-            return FlagEnum.complete
-        return FlagEnum.error
+        return FlagEnum.complete if var_ref in self.variables else FlagEnum.error
 
 
 class XmlfilecontentObject(ObjectBase):
@@ -39,7 +37,10 @@ class XmlfilecontentObject(ObjectBase):
             info['path'], info['filename'] = info['filepath'].rsplit('/', 1)
             info['xpath'] = self.entities['xpath'].values[0]
 
-            if not all([entity.result(info.get(name)) for name, entity in self.entities.items()]):
+            if not all(
+                entity.result(info.get(name))
+                for name, entity in self.entities.items()
+            ):
                 continue
 
             tree = etree.fromstring(item['content'])
@@ -58,7 +59,7 @@ class Textfilecontent54Object(ObjectBase):
         items = self.client.get(self.name)
         instance = int(self.entities.pop('instance').values[0])
         if instance < 0:
-            raise Exception('Instance error: %s' % instance)
+            raise Exception(f'Instance error: {instance}')
 
         ret = []
         for item in items:
@@ -67,10 +68,13 @@ class Textfilecontent54Object(ObjectBase):
             patterns = self.entities['pattern'].values
             info['pattern'] = patterns[0] if patterns else ''
 
-            if not all([entity.result(info.get(name)) for name, entity in self.entities.items()]):
+            if not all(
+                entity.result(info.get(name))
+                for name, entity in self.entities.items()
+            ):
                 continue
 
-            reg = re.findall(r'(%s)' % info['pattern'], item['content'])
+            reg = re.findall(f"({info['pattern']})", item['content'])
             if not reg:
                 continue
 
